@@ -25,12 +25,15 @@
 #• Staring on November 18th, at least one significant update must be committed each day for nine days (not necessarily consecutive). If you complete the project at least 24 hours before the deadline, the number can be reduced to five days. In total there
 #must be at least 9 non-trivial commits.
 
-
+# $s0 where you read in char
+# $s1 - character count
+# $a0, $t0 - userInput 
+# $s2 - final answer
 
 
 .data
 
-	userInput: .space 1001
+	userInput: .space 1001``;
 	error: .asciiz "Invalid hexadecimal number"
 	
 .text
@@ -51,11 +54,7 @@
 		
 		#needed for the comparison at then end of the loop
 		add $s0, $0, $a0
-		
-		#print newline
-		#li $v0, 4
-		#la $a0, nl
-		#syscall
+	
 		
 		#check if at endline and will read in next byte
 		addi $t0, $t0, 1
