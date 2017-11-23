@@ -28,40 +28,66 @@
 # $s0 where you read in char
 # $s1 - character count
 # $a0, $t0 - userInput 
-# $s2 - final answer
-
+# $s3 - final answer
+# $s2 - space count
+# $t1 - space mark
 
 .data
-
-	userInput: .space 1001``;
+	
+	userInput: .space 10
 	error: .asciiz "Invalid hexadecimal number"
+	error2: .asciiz "good hexadecimal number"
 	
 .text
 
 	main:
-		#tkes in useer input
+		#takes in user input
 		li $v0, 8
 		la $a0, userInput
-		li $a1, 1001
+		li $a1, 10
 		syscall
 		
-		j loop
+		#chracter count
+		li $s1, 0
+		#space counter
+		li $s2, 0
+		#space mark
+		li $t1, 0
 		
-		j Subprogram2	#call conversion
-		j Subprogram3	#call to output
-	loop:
+		j loop #get the length
+		
+		#j Subprogram2	#call conversion
+		#j Subprogram3	#call to output
+		
+	loop:	#loop to get the length and possible spaces count and check to see if the string is valid
 		lb $a0, 0($t0)
 		
 		#needed for the comparison at then end of the loop
 		add $s0, $0, $a0
 	
-		
 		#check if at endline and will read in next byte
+		beq $s0, 0, exit2
+		beq $s0, 10, exit2
+		
+		beq $s0, 32, countSpaces
+		j notSpace
+		#increments length
+		
+		# moves to next char
 		addi $t0, $t0, 1
-		beq $s0, 0, main
-		beq $s0, 10, main
-		addi $s1, $s1, 1
+		
 		j loop
+		
+	countSpaces:	beq $s0, 0, mark
+			bgt $s1, 0, mark
+			j loop
+	mark:		#marks fisrt and second occurences of strings
+			add $t1, $t1, 1
+			j loop
+	notSpace: 	#increments length
+			beq $t1, 2, exit
+			addi $s1, $s1, 1
+			j loop 
 	
 	Subprogram1:
 	#It converts a single hexadecimal character to a decimal integer. Registers must be used to pass parameters into 
@@ -72,7 +98,8 @@
 	Subprogram2:
 	#It converts a single hexadecimal string to a decimal integer. It must call Subprogram 1 to get the decimal value 
 	#of each of the characters in the string. Registers must be used to pass parameters into the subprogram. Values must be returned via the stack.
-
+	
+	
 	##whlie lnot at he end of the string call subprogram1. fro each achar
 	#add the number to each other
 	
@@ -80,8 +107,21 @@
 	Subprogram3:
 	#It displays an unsigned decimal integer. The stack must be used to pass parameters into the subprogram.
 	# No values are returned.
-		add $a0, $s2, $0
-		bge $s4, 8, printDiff
-		li $v0, 1
+		#add $a0, $s2, $0
+		#bge $s4, 8, printDiff
+		#li $v0, 1
+		#syscall
+		
+	exit:	#invalid string
+		li $v0, 4
+		la $a0, error
 		syscall
+		
+	exit2:	#good string
+		li $v0, 4
+		la $a0, error2
+		syscall
+		
+	 
+	
 
