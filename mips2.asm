@@ -53,6 +53,8 @@
 		li $s2, 0
 		#space mark
 		li $t1, 0
+		#userInput
+		la $t0, userInput
 		
 		j loop #get the length
 		
@@ -65,7 +67,7 @@
 		#needed for the comparison at then end of the loop
 		add $s0, $0, $a0
 	
-		#check if at endline and will read in next byte
+		#check if at endline 
 		beq $s0, 0, exit2
 		beq $s0, 10, exit2
 		
@@ -74,19 +76,24 @@
 		#increments length
 		
 		# moves to next char
-		addi $t0, $t0, 1
+		#addi $t0, $t0, 1
 		
 		j loop
 		
 	countSpaces:	beq $s0, 0, mark
 			bgt $s1, 0, mark
+			addi $t0, $t0, 1
 			j loop
 	mark:		#marks fisrt and second occurences of strings
 			add $t1, $t1, 1
+			#moves to next char
+			addi $t0, $t0, 1
 			j loop
 	notSpace: 	#increments length
 			beq $t1, 2, exit
 			addi $s1, $s1, 1
+			#moves to next char
+			addi $t0, $t0, 1
 			j loop 
 	
 	Subprogram1:
