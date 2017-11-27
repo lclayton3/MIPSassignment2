@@ -34,7 +34,7 @@
 
 .data
 	
-	userInput: .space 10
+	userInput: .space 1001
 	error: .asciiz "Invalid hexadecimal number"
 	error2: .asciiz "good hexadecimal number"
 	
@@ -44,7 +44,7 @@
 		#takes in user input
 		li $v0, 8
 		la $a0, userInput
-		li $a1, 10
+		li $a1, 1001
 		syscall
 		
 		#chracter count
@@ -73,15 +73,11 @@
 		
 		beq $s0, 32, countSpaces
 		j notSpace
-		#increments length
+		beq $s0, 44, comma
 		
-		# moves to next char
-		#addi $t0, $t0, 1
-		
-		j loop
-		
-	countSpaces:	beq $s0, 0, mark
+	countSpaces:	beq $t1, 0, mark
 			bgt $s1, 0, mark
+			#moves to next char
 			addi $t0, $t0, 1
 			j loop
 	mark:		#marks fisrt and second occurences of strings
@@ -95,6 +91,10 @@
 			#moves to next char
 			addi $t0, $t0, 1
 			j loop 
+	
+	comma:
+			#this will get the decimal values for all char before comma
+			
 	
 	Subprogram1:
 	#It converts a single hexadecimal character to a decimal integer. Registers must be used to pass parameters into 
@@ -123,10 +123,15 @@
 		li $v0, 4
 		la $a0, error
 		syscall
+		li $v0,10 
+		syscall
 		
 	exit2:	#good string
 		li $v0, 4
 		la $a0, error2
+		syscall
+		
+		li $v0,10 
 		syscall
 		
 	 
