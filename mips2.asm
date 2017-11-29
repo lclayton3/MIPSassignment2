@@ -27,10 +27,14 @@
 
 # $s0 where you read in char
 # $s1 - character count
-# $a0, $t0 - userInput 
-# $s3 - final answer
 # $s2 - space count
+# $s3 - final answer
+# $s4 = where you read in second char
+# $a0, $t0 - userInput
+# $a1 
 # $t1 - space mark
+# $t2 - value for loop 
+# t3 - holds entire string
 
 .data
 	
@@ -47,7 +51,7 @@
 		li $a1, 1001
 		syscall
 		
-		#chracter count
+		#substring chracter count
 		li $s1, 0
 		#space counter
 		li $s2, 0
@@ -55,7 +59,11 @@
 		li $t1, 0
 		#userInput
 		la $t0, userInput
+		#char counter
+		li $t2, 0
 		
+		#initalize another redister that holds user input
+		lb $t3, userInput
 		j loop #get the length
 		
 		#j Subprogram2	#call conversion
@@ -63,6 +71,8 @@
 		
 	loop:	#loop to get the length and possible spaces count and check to see if the string is valid
 		lb $a0, 0($t0)
+		#replicates the current length
+		add $t2, $0, $s1
 		
 		#needed for the comparison at then end of the loop
 		add $s0, $0, $a0
@@ -72,8 +82,10 @@
 		beq $s0, 10, exit2
 		
 		beq $s0, 32, countSpaces
-		j notSpace
-		beq $s0, 44, comma
+		beq $s0, 44, Suprogram2
+		bne $s0, 32, notSpace
+		
+		
 		
 	countSpaces:	beq $t1, 0, mark
 			bgt $s1, 0, mark
@@ -100,15 +112,46 @@
 	#It converts a single hexadecimal character to a decimal integer. Registers must be used to pass parameters into 
 	#the subprogram. Values must be returned via registers.
 	
+	#may be able to check to see if valid string here
+	#if branch is less than 47, invalide string NAN
+	# if branch is less than 58, 0-10
+	#if branch is less than 65, invalid strind NaN
+	#if branch is less than  71, go to AF
+	#if branch is less than 97, invalid string
+	#if branch is less than 103, got to a-f
+		#make current char in substring equal to comma and return to
+		# Subprogram 2 
+	#if none of the above invalid
 	
-
+	j Subprogram 2
+	
+	j Sub
 	Subprogram2:
+	# set all markers fro valid string back to zero
+	# char counter
+	li $s1, 0
+	#space counter
+	li $s2, 0
+	#space mark
+	li $t1, 0
+	
 	#It converts a single hexadecimal string to a decimal integer. It must call Subprogram 1 to get the decimal value 
 	#of each of the characters in the string. Registers must be used to pass parameters into the subprogram. Values must be returned via the stack.
 	
-	
-	##whlie lnot at he end of the string call subprogram1. fro each achar
+	lb $a1, 0($t3)
+	##whlie not at the end of the string call subprogram1. for each achar
 	#add the number to each other
+	
+	#gets current char assigns it to $s4
+	add $s4, $0, $a1
+
+	
+	addi $t0, $t0, 1
+	beq $s4, $s0, loop
+	bne $s4, 32, Subprogram1
+	
+	j Subprogram2
+	
 	
 	
 	Subprogram3:
