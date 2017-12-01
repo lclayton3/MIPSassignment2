@@ -29,12 +29,16 @@
 # $s1 - character count
 # $s2 - space count
 # $s3 - final answer
-# $s4 = where you read in second char
+# $s4 - where you read in second char
+# $s5 - current decimal number
+# $s6 - used for multiplication of the length	
 # $a0, $t0 - userInput
 # $a1 
+# $a2 - used to print out decimal number
 # $t1 - space mark
 # $t2 - value for loop 
-# t3 - holds entire string
+# $to,t3 - holds entire string for loop
+# $t4 - register is useed for conversion
 
 .data
 	
@@ -82,6 +86,7 @@
 		beq $s0, 10, exit2
 		
 		beq $s0, 32, countSpaces
+		li $s5, 0
 		beq $s0, 44, Suprogram2
 		bne $s0, 32, notSpace
 		
@@ -114,26 +119,60 @@
 	
 	#may be able to check to see if valid string here
 	#if branch is less than 47, invalide string NAN
+	blt $s4, 47, invalid
+	invalid:
+	
 	# if branch is less than 58, 0-10
+	blt $s4, 58, oneToTen
+	oneToTen:
+		li $t4, 0 #to store the conversion
+		addi $t4, $s4, -48
+		add $s6, $0, $s1 # store length so we can use it
+		sll $s6, $s6, 2 # multiply by four to get shif afount(pow(16,len))
+		sllv $s6, $t4, $s6 #executes 16^len
+		add $s5, $s6, $s5 #adds to total summ
+		addi $s1, $s1, -1  # decrements length by 1
+		j Subprogram2
 	#if branch is less than 65, invalid strind NaN
+	blt $s4, 65, invalid
 	#if branch is less than  71, go to AF
+	blt $s4, 71, AtoF
+	AtoF:
+		li $t4, 0 #to store the conversion
+		addi $t4, $s4, -55
+		add $s6, $0, $s1 # store length so we can use it
+		sll $s6, $s6, 2 # multiply by four to get shif afount(pow(16,len))
+		sllv $s6, $t4, $s6 #executes 16^len
+		add $s5, $s6, $s5 #adds to total summ
+		addi $s1, $s1, -1  # decrements length by 1
+		j Subprogram2
 	#if branch is less than 97, invalid string
+	blt $s4, 97, invalid
 	#if branch is less than 103, got to a-f
+	blt $s4, 103, atof
+	atof:
+		li $t4, 0 #to store the conversion
+		addi $t4, $s4, -87
+		add $s6, $0, $s1 # store length so we can use it
+		sll $s6, $s6, 2 # multiply by four to get shif afount(pow(16,len))
+		sllv $s6, $t4, $s6 #executes 16^len
+		add $s5, $s6, $s5 #adds to total summ
+		addi $s1, $s1, -1  # decrements length by 1
+		j Subprogram2
 		#make current char in substring equal to comma and return to
 		# Subprogram 2 
 	#if none of the above invalid
+	j invalid
+	invalid:
+		mv $s4, $s0, hello
+		j Subprogram2
 	
-	j Subprogram 2
 	
-	j Sub
+	
+	
 	Subprogram2:
-	# set all markers fro valid string back to zero
-	# char counter
-	li $s1, 0
-	#space counter
-	li $s2, 0
-	#space mark
-	li $t1, 0
+	
+	
 	
 	#It converts a single hexadecimal string to a decimal integer. It must call Subprogram 1 to get the decimal value 
 	#of each of the characters in the string. Registers must be used to pass parameters into the subprogram. Values must be returned via the stack.
@@ -145,9 +184,10 @@
 	#gets current char assigns it to $s4
 	add $s4, $0, $a1
 
-	
-	addi $t0, $t0, 1
-	beq $s4, $s0, loop
+	#moves to next char
+	addi $t3, $t3, 1
+	#if curr char == comma then print curent decimal value
+	beq $s4, $s0, Subprogram3
 	bne $s4, 32, Subprogram1
 	
 	j Subprogram2
@@ -157,10 +197,19 @@
 	Subprogram3:
 	#It displays an unsigned decimal integer. The stack must be used to pass parameters into the subprogram.
 	# No values are returned.
-		#add $a0, $s2, $0
-		#bge $s4, 8, printDiff
-		#li $v0, 1
-		#syscall
+	# set all markers fro valid string back to zero
+		# char counter
+		li $s1, 0
+		#space counter
+		li $s2, 0
+		#space mark
+		li $t1, 0
+		add $a2, $s5, $0
+		bge $s4, 8, printDiff
+		li $v0, 1
+		syscall
+		
+		j loop
 		
 	exit:	#invalid string
 		li $v0, 4
