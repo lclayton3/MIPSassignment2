@@ -31,20 +31,23 @@
 # $s3 - final answer
 # $s4 - where you read in second char
 # $s5 - current decimal number
-# $s6 - used for multiplication of the length	
+# $s6 - used for multiplication of the length
+# $s7 - holds the length	
 # $a0, $t0 - userInput
 # $a1 
 # $a2 - used to print out decimal number
 # $t1 - space mark
 # $t2 - value for loop 
-# $to,t3 - holds entire string for loop
+# $t0,t3 - holds entire string for loop
 # $t4 - register is useed for conversion
 
 .data
 	
 	userInput: .space 1001
-	error: .asciiz "Invalid hexadecimal number"
+	error: .asciiz "NaN"
 	error2: .asciiz "good hexadecimal number"
+	tooLarge: .asciiz "Too Large"
+	
 	
 .text
 
@@ -65,9 +68,11 @@
 		la $t0, userInput
 		#char counter
 		li $t2, 0
+		#total sum for entire string
+		li $s5, 0
 		
 		#initalize another redister that holds user input
-		lb $t3, userInput
+		la $t3, userInput
 		j loop #get the length
 		
 		#j Subprogram2	#call conversion
@@ -80,17 +85,39 @@
 		
 		#needed for the comparison at then end of the loop
 		add $s0, $0, $a0
-	
-		#check if at endline 
-		beq $s0, 0, exit2
-		beq $s0, 10, exit2
-		
+		#if you are at a space
 		beq $s0, 32, countSpaces
-		li $s5, 0
-		beq $s0, 44, Suprogram2
+		#check if at endline or at a comma or 0
+		#beq $s0, 0, invalidWithNothing
+		#checks to see if you are at a comma
+		move $s7, $s1
+		beq $s0, 0, Subprogram2Label_Special
+		beq $s0, 44, Subprogram2Label
+		beq $s0, 10, Subprogram2Label
+		
+		
+		
+		
+		
+		#checks to see if you are not at a comma, and not at a space(at a char)
 		bne $s0, 32, notSpace
 		
+	Subprogram2Label:
+	
+		jal Subprogram2
+		j JumpTo3
 		
+	Subprogram2Label_Special:	
+		jal Subprogram2
+		j exit
+	
+	JumpTo3:
+		jal Subprogram3
+		li $v0, 11
+		la $a0, 44
+		syscall	
+		addi $t0, $t0, 1
+		j loop
 		
 	countSpaces:	beq $t1, 0, mark
 			bgt $s1, 0, mark
@@ -103,77 +130,150 @@
 			addi $t0, $t0, 1
 			j loop
 	notSpace: 	#increments length
-			beq $t1, 2, exit
+			beq $t1, 2, invalidString
 			addi $s1, $s1, 1
 			#moves to next char
 			addi $t0, $t0, 1
 			j loop 
 	
-	comma:
-			#this will get the decimal values for all char before comma
+	invalidString:
+			# char counter
+			move $s1, $zero
+			#space counter
+			move $s2, $zero
+			#space mark
+			move $t1, $zero
+		
+			j increment
+	
 			
 	
+	increment:
+			addi $t0, $t0, 1
+			
+			lb $a0, 0($t0)
+			add $s0, $0, $a0
+			beq $s0, 44, ifEqaulComma
+			beq $s0, 10, EndLine
+		 
+			j increment
+	ifEqaulComma:
+			j checkString2
+			
+			
+			
+			
+	EndLine:
+			j loop
+	
+	checkString2:
+			#add $t3, $t3, 1
+			lb $a1, 0($t3)
+			add $s4, $0, $a1
+			
+			#move to an actual char in string 1
+			addi $t0, $t0, 1
+			
+			beq $s0, $s4, loop_helper
+			j increment2
+	increment2:
+			addi $t3, $t3, 1
+			lb $a1, 0($t3)
+			add $s4, $0, $a1
+			beq $s0, $s4, loop_helper
+			j increment2
+	loop_helper:
+		#add $t0, $t0, 1
+		addi $t3, $t3, 1
+		j loop
 	Subprogram1:
+		
+	
+	#$s4 is being passedin as char
 	#It converts a single hexadecimal character to a decimal integer. Registers must be used to pass parameters into 
 	#the subprogram. Values must be returned via registers.
 	
 	#may be able to check to see if valid string here
 	#if branch is less than 47, invalide string NAN
 	blt $s4, 47, invalid
-	invalid:
 	
 	# if branch is less than 58, 0-10
 	blt $s4, 58, oneToTen
-	oneToTen:
-		li $t4, 0 #to store the conversion
-		addi $t4, $s4, -48
-		add $s6, $0, $s1 # store length so we can use it
-		sll $s6, $s6, 2 # multiply by four to get shif afount(pow(16,len))
-		sllv $s6, $t4, $s6 #executes 16^len
-		add $s5, $s6, $s5 #adds to total summ
-		addi $s1, $s1, -1  # decrements length by 1
-		j Subprogram2
+	
 	#if branch is less than 65, invalid strind NaN
 	blt $s4, 65, invalid
 	#if branch is less than  71, go to AF
 	blt $s4, 71, AtoF
-	AtoF:
-		li $t4, 0 #to store the conversion
-		addi $t4, $s4, -55
-		add $s6, $0, $s1 # store length so we can use it
-		sll $s6, $s6, 2 # multiply by four to get shif afount(pow(16,len))
-		sllv $s6, $t4, $s6 #executes 16^len
-		add $s5, $s6, $s5 #adds to total summ
-		addi $s1, $s1, -1  # decrements length by 1
-		j Subprogram2
+	
 	#if branch is less than 97, invalid string
 	blt $s4, 97, invalid
 	#if branch is less than 103, got to a-f
 	blt $s4, 103, atof
-	atof:
-		li $t4, 0 #to store the conversion
-		addi $t4, $s4, -87
-		add $s6, $0, $s1 # store length so we can use it
-		sll $s6, $s6, 2 # multiply by four to get shif afount(pow(16,len))
-		sllv $s6, $t4, $s6 #executes 16^len
-		add $s5, $s6, $s5 #adds to total summ
-		addi $s1, $s1, -1  # decrements length by 1
-		j Subprogram2
-		#make current char in substring equal to comma and return to
-		# Subprogram 2 
+	
+		
 	#if none of the above invalid
 	j invalid
+	
+	invalidWithNothing:
+		li $v0, 4
+		la $a0, error
+		syscall
+		
+		addi $t0, $t0, 1
+		lb $a0, 0($t0)
+		add $s0, $a0, $zero
+		bne $s0, 10, loop2MainLoop
+		li $v0,10 
+		syscall
+	
+	loop2MainLoop:
+		jr $ra	
+		
+				
 	invalid:
-		mv $s4, $s0, hello
-		j Subprogram2
+		li $v0, 4
+		la $a0, error
+		syscall
+		beq $s4, 10, exit
+		li $v0, 11
+		la $a0, 44
+		syscall
+		
+		li $s1, 0
+		j checkString2
+		
+	exit3:
+		li $v0, 4
+		la $a0, error
+		syscall
+		j loop
+	
+	
+	
+	
+	
+	
+	error_TooLarge:
+		la $a0, tooLarge
+		li $v0, 4
+		syscall
+		
+		la $a0, 44
+		li $v0, 11
+		syscall
+		
+		li $s1, 0
+		
+		j checkString2
+		
 	
 	
 	
 	
 	Subprogram2:
 	
-	
-	
+	bgt $s7, 8, error_TooLarge
+	beq $s7, $zero, invalidWithNothing
 	#It converts a single hexadecimal string to a decimal integer. It must call Subprogram 1 to get the decimal value 
 	#of each of the characters in the string. Registers must be used to pass parameters into the subprogram. Values must be returned via the stack.
 	
@@ -187,34 +287,49 @@
 	#moves to next char
 	addi $t3, $t3, 1
 	#if curr char == comma then print curent decimal value
-	beq $s4, $s0, Subprogram3
-	bne $s4, 32, Subprogram1
+	beq $s4, $s0, ReturnFrom2
+	# or if char == endline
+	beq $s4, 10, ReturnFrom2
+	beq $s4, 0, ReturnFrom2
+	bne $s4, 32, Subprogram1Label
 	
 	j Subprogram2
 	
-	
-	
+	Subprogram1Label:
+		jal Subprogram1	
+		j Subprogram2
+		
+	ReturnFrom2:
+		j JumpTo3 	
+		
 	Subprogram3:
-	#It displays an unsigned decimal integer. The stack must be used to pass parameters into the subprogram.
+	#It displays an unsigned decimals integer. The stack must be used to pass parameters into the subprogram.
 	# No values are returned.
 	# set all markers fro valid string back to zero
+		
+		
 		# char counter
-		li $s1, 0
+		move $s1, $zero
 		#space counter
-		li $s2, 0
+		move $s2, $zero
 		#space mark
-		li $t1, 0
-		add $a2, $s5, $0
-		bge $s4, 8, printDiff
+		move $t1, $zero
+		
+		add $a0, $s5, $0
+		bge $s7, 8, printDiff
 		li $v0, 1
 		syscall
+		beq $s4, 10, exit
+		beq $s4, 0, exit
+		move $s5, $zero
 		
-		j loop
+		jr $ra
+	
 		
 	exit:	#invalid string
-		li $v0, 4
-		la $a0, error
-		syscall
+		#li $v0, 4
+		#la $a0, error
+		#syscall
 		li $v0,10 
 		syscall
 		
@@ -226,6 +341,63 @@
 		li $v0,10 
 		syscall
 		
-	 
+		
+	oneToTen:
+		li $t4, 0 #to store the conversion
+		addi $t4, $s4, -48
+		add $s6, $0, $s1 # store length so we can use it
+		addi $s6, $s6, -1 #sub 1 from length for calaculation
+		sll $s6, $s6, 2 # multiply by four to get shif afount(pow(16,len))
+		sllv $s6, $t4, $s6 #executes 16^len
+		add $s5, $s6, $s5 #adds to total summ
+		addi $s1, $s1, -1  # decrements length by 1
+		jr $ra
+	AtoF:
+		li $t4, 0 #to store the conversion
+		addi $t4, $s4, -55
+		
+		add $s6, $0, $s1 # store length so we can use it
+		addi $s6, $s6, -1 #sub 1 from length for calaculation
+		sll $s6, $s6, 2 # multiply by four to get shif afount(pow(16,len))
+		sllv $s6, $t4, $s6 #executes 16^len
+		add $s5, $s6, $s5 #adds to total summ
+		addi $s1, $s1, -1  # decrements length by 1
+		jr $ra
+	 atof:
+		li $t4, 0 #to store the conversion
+		addi $t4, $s4, -87
+		
+		add $s6, $0, $s1 # store length so we can use it
+		addi $s6, $s6, -1 #sub 1 from length for calaculation
+		sll $s6, $s6, 2 # multiply by four to get shif afount(pow(16,len))
+		sllv $s6, $t4, $s6 #executes 16^len
+		add $s5, $s6, $s5 #adds to total summ
+		addi $s1, $s1, -1  # decrements length by 1
+		jr $ra
 	
-
+	printDiff: 	#for length greater than 8
+		addi $t2, $0, 10000
+		
+		divu $s5, $t2 # divivde by 10000
+		mflo $t2
+		
+		
+		li  $v0, 1
+		addi $a0, $t2, 0 #print low
+		syscall 
+		
+		
+		mfhi $t2
+		
+		
+		
+		
+		li  $v0, 1
+		addi $a0, $t2, 0 #print high
+		syscall
+		
+		beq $s4, 10, exit
+		beq $s4, 0, exit
+		move $s5, $zero
+		
+		
